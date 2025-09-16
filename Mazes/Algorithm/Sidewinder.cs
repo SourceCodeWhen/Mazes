@@ -4,7 +4,7 @@ public static class Sidewinder
 {
     private static Random _random = new Random();
     
-    public static Grid On(Grid grid)
+    public static Grid On(Grid grid, int closeOut = 2)
     {
         foreach (Cell[] row in grid.EachRow())
         {
@@ -17,7 +17,7 @@ public static class Sidewinder
                 bool atEasternBoundary = cell.East == null;
                 bool atNorthernBoundary = cell.North == null;
                 
-                bool shouldCloseOut = atEasternBoundary || (!atNorthernBoundary && _random.Next(2) == 0);
+                bool shouldCloseOut = atEasternBoundary || (!atNorthernBoundary && _random.Next(closeOut) == 0);
 
                 if (shouldCloseOut)
                 {

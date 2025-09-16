@@ -1,8 +1,10 @@
 using System.Data;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using ImageMagick;
 using ImageMagick.Drawing;
+using Raylib_cs;
 
 namespace Mazes;
 
@@ -10,7 +12,7 @@ public class Grid
 {
     public int Rows { get; }
     public int Columns { get; }
-    
+
     private Cell?[][] _cells;
 
     private Random _rand;
@@ -82,7 +84,7 @@ public class Grid
             {
                 return null;
             }
-            
+
             return _cells[row][col];
         }
     }
@@ -102,8 +104,8 @@ public class Grid
 
     public Cell? RandomCell()
     {
-        var row = _rand.Next(Rows -1);
-        var col = _rand.Next(this[row].Length -1);
+        var row = _rand.Next(Rows - 1);
+        var col = _rand.Next(this[row].Length - 1);
         return this[row, col];
     }
 
@@ -122,7 +124,7 @@ public class Grid
 
     public IEnumerable<Cell> EachCell()
     {
-        foreach(var array in this.EachRow())
+        foreach (var array in this.EachRow())
         {
             foreach (var cell in array)
             {
@@ -144,39 +146,38 @@ public class Grid
         StringBuilder sb = new StringBuilder();
 
 
-        
         // Top of maze
         sb.Append("+");
         for (int i = 0; i < Columns; i++)
         {
             sb.Append("---+");
         }
+
         sb.Append(Environment.NewLine);
 
         String corner = "+";
-        
-        for(int row = 0; row < _cells.Length; row++)
+
+        for (int row = 0; row < _cells.Length; row++)
         {
             StringBuilder top = new StringBuilder().Append("|");
             StringBuilder bottom = new StringBuilder().Append("+");
-            
-            for (int col  = 0; col < _cells[row].Length; col++)
+
+            for (int col = 0; col < _cells[row].Length; col++)
             {
-                
                 if (_cells[row][col] == null)
                 {
                     _cells[row][col] = new Cell(-1, -1);
                 }
 
                 String body = $" {ContentsOf(_cells[row][col])} ";
-                
+
                 String eastboundary = _cells[row][col].Linked(_cells[row][col].East) ? " " : "|";
 
                 top.Append(body);
                 top.Append(eastboundary);
-                
+
                 String southboundary = _cells[row][col].Linked(_cells[row][col].South) ? "   " : "---";
-                
+
                 bottom.Append(southboundary);
                 bottom.Append(corner);
             }
@@ -186,7 +187,7 @@ public class Grid
             sb.Append(bottom);
             sb.Append(Environment.NewLine);
         }
-        
+
         return sb.ToString();
     }
 
@@ -200,7 +201,7 @@ public class Grid
             Drawables graphic = new Drawables();
 
             graphic.StrokeColor(MagickColors.Black);
-            
+
             foreach (Cell cell in EachCell())
             {
                 int x1 = cell.Col * cellSize;
@@ -231,6 +232,50 @@ public class Grid
 
             graphic.Draw(image);
             image.Write("/home/jack/Pictures/Mazes/" + "export_" + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + ".jpg");
+        }
+    }
+
+    public Color? BackgroundColourForCell(Cell cell)
+    {
+        return null;
+    }
+
+    public void toRaylib(int cellSize = 10, float wallThickness = 2.0f, bool backgrounds = false)
+    {
+        foreach (Cell cell in EachCell())
+        {
+            int x1 = cell.Col * cellSize;
+            int y1 = cell.Row * cellSize;
+            int x2 = (cell.Col + 1) * cellSize;
+            int y2 = (cell.Row + 1) * cellSize;
+
+            if (backgrounds)
+            {
+                var colour = BackgroundColourForCell(cell) ?? Color.White;
+                Raylib.DrawRectangle(x1, y1, x1 - x2, y1 - y2, colour);
+            }
+            else
+            {
+                if (cell.North == null)
+                {
+                    Raylib.DrawLineEx(new Vector2(x1, y1), new Vector2(x2, y1), wallThickness, Color.Black);
+                }
+
+                if (cell.West == null)
+                {
+                    Raylib.DrawLineEx(new Vector2(x1, y1), new Vector2(x1, y2), wallThickness, Color.Black);
+                }
+
+                if (!cell.Linked(cell.East))
+                {
+                    Raylib.DrawLineEx(new Vector2(x2, y1), new Vector2(x2, y2), wallThickness, Color.Black);
+                }
+
+                if (!cell.Linked(cell.South))
+                {
+                    Raylib.DrawLineEx(new Vector2(x1, y2), new Vector2(x2, y2), wallThickness, Color.Black);
+                }
+            }
         }
     }
 }

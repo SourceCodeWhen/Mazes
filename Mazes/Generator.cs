@@ -4,9 +4,9 @@ namespace Mazes;
 
 public static class Generator
 {
-    public static void LongestPath()
+    public static void LongestPath(int rows, int columns)
     {
-        var grid = new DistanceGrid(5, 5);
+        var grid = new DistanceGrid(rows, columns);
         BinaryTree.On(grid);
         
         var start =  grid[0,0];
@@ -20,5 +20,19 @@ public static class Generator
         grid.distances = newDistances.PathTo(goalDistance.Key);
         
         Console.Write(grid.ToString());
+    }
+
+    public static Grid GenBinaryTree(int rows, int columns)
+    {
+        var grid = new DistanceGrid(rows,columns);
+        BinaryTree.On(grid);
+        return grid;
+    }
+
+    public static Grid GenSidewinder(int rows, int columns, int closeOut = 2)
+    {
+        var grid = new DistanceGrid(rows,columns);
+        Sidewinder.On(grid, closeOut);
+        return grid;
     }
 }
