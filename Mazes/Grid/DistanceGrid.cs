@@ -2,9 +2,9 @@ using Mazes.Pathfinding;
 
 namespace Mazes;
 
-public class DistanceGrid : Grid
+public class DistanceGrid : BaseGrid
 {
-    public Distances distances { get; set; }
+    public override Distances distances { get; set; }
     
     public DistanceGrid(int rows, int columns) : base(rows, columns)
     {

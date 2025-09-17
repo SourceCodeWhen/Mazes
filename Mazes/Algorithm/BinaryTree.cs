@@ -1,12 +1,12 @@
 namespace Mazes.Algorithm;
 
-public static class BinaryTree
+public class BinaryTree : BaseAlgo
 {
     private static Random _random = new Random();
     
-    public static Grid On(Grid grid)
+    public BaseGrid On(BaseGrid baseGrid, SortedDictionary<string, int> pairs)
     {
-        foreach (Cell cell in grid.EachCell())
+        foreach (Cell cell in baseGrid.EachCell())
         {
             List<Cell> neighbours = new List<Cell>();
 
@@ -29,6 +29,11 @@ public static class BinaryTree
 
         }
 
-        return grid;
+        return baseGrid;
+    }
+
+    public SortedDictionary<string, int> PairOptions()
+    {
+        return new SortedDictionary<string, int>();
     }
 }

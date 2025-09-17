@@ -1,12 +1,18 @@
 namespace Mazes.Algorithm;
 
-public static class Sidewinder
+public class Sidewinder : BaseAlgo
 {
     private static Random _random = new Random();
     
-    public static Grid On(Grid grid, int closeOut = 2)
+    public BaseGrid On(BaseGrid baseGrid, SortedDictionary<string, int> pairs)
     {
-        foreach (Cell[] row in grid.EachRow())
+        int closeOut = 2;
+        if (pairs.TryGetValue("CLOSEOUT", out var value))
+        {
+            closeOut = value;
+        }
+
+        foreach (Cell[] row in baseGrid.EachRow())
         {
             List<Cell> run =  new List<Cell>();
 
@@ -36,6 +42,11 @@ public static class Sidewinder
             }
         }
 
-        return grid;
+        return baseGrid;
+    }
+
+    public SortedDictionary<string, int> PairOptions()
+    {
+        return new SortedDictionary<string, int>() { {"CLOSEOUT", 2} };
     }
 }

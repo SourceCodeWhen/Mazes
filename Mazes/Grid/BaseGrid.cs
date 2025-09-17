@@ -1,15 +1,24 @@
+using System.Collections.Concurrent;
 using System.Data;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 using ImageMagick;
 using ImageMagick.Drawing;
+using Mazes.Pathfinding;
 using Raylib_cs;
 
 namespace Mazes;
 
-public class Grid
+public class BaseGrid
 {
+    public virtual Distances distances { get; set; }
+
+    private RenderTexture2D _target;
+
+    public Boolean _rendered = false;
+
     public int Rows { get; }
     public int Columns { get; }
 
@@ -17,7 +26,7 @@ public class Grid
 
     private Random _rand;
 
-    public Grid(int rows, int columns)
+    public BaseGrid(int rows, int columns)
     {
         _rand = new Random();
         Rows = rows;
@@ -235,12 +244,69 @@ public class Grid
         }
     }
 
-    public Color? BackgroundColourForCell(Cell cell)
+    public virtual Color BackgroundColourForCell(Cell cell)
     {
-        return null;
+        return Color.White;
     }
 
-    public void toRaylib(int cellSize = 10, float wallThickness = 2.0f, bool backgrounds = false)
+    public void toRaylib(int renderWidth, int renderHeight, int cellSize = 10, float wallThickness = 2.0f, bool backgrounds = false)
+    {
+        if (_rendered == false)
+        {
+            _target = Raylib.LoadRenderTexture(renderWidth, renderHeight);
+
+            Raylib.BeginTextureMode(_target);
+
+            if (backgrounds)
+            {
+                RenderBackground(cellSize);
+            }
+
+            RenderWalls(cellSize, wallThickness);
+            Raylib.EndTextureMode();
+            _rendered = true;
+        }
+
+        Raylib.DrawTextureRec(_target.Texture, new Rectangle()
+        {
+            X = 0,
+            Y = 0,
+            Width = (float)_target.Texture.Width,
+            Height = (float)-_target.Texture.Height
+        }, new Vector2(0, 0), Color.White);
+    }
+
+    private void RenderBackground(int cellSize)
+    {
+        ConcurrentBag<(int x1, int y1, Color colour)>? _cellBag = new ConcurrentBag<(int x1, int y1, Color color)>();
+
+        Parallel.ForEach(EachCell(), cell =>
+        {
+            int x1 = cell.Col * cellSize;
+            int y1 = cell.Row * cellSize;
+
+            var colour = BackgroundColourForCell(cell);
+
+            _cellBag.Add((x1, y1, colour));
+        });
+
+        foreach (var cell in _cellBag)
+        {
+            Raylib.DrawRectangle(cell.x1, cell.y1, cellSize, cellSize, cell.colour);
+        }
+
+        // foreach (var cell in EachCell())
+        // {
+        //     int x1 = cell.Col * cellSize;
+        //     int y1 = cell.Row * cellSize;
+        //
+        //     var colour = BackgroundColourForCell(cell);
+        //     
+        //     Raylib.DrawRectangle(x1, y1, cellSize, cellSize, colour);
+        // }
+    }
+
+    private void RenderWalls(int cellSize, float wallThickness)
     {
         foreach (Cell cell in EachCell())
         {
@@ -249,32 +315,24 @@ public class Grid
             int x2 = (cell.Col + 1) * cellSize;
             int y2 = (cell.Row + 1) * cellSize;
 
-            if (backgrounds)
+            if (cell.North == null)
             {
-                var colour = BackgroundColourForCell(cell) ?? Color.White;
-                Raylib.DrawRectangle(x1, y1, x1 - x2, y1 - y2, colour);
+                Raylib.DrawLineEx(new Vector2(x1, y1), new Vector2(x2, y1), wallThickness, Color.Black);
             }
-            else
+
+            if (cell.West == null)
             {
-                if (cell.North == null)
-                {
-                    Raylib.DrawLineEx(new Vector2(x1, y1), new Vector2(x2, y1), wallThickness, Color.Black);
-                }
+                Raylib.DrawLineEx(new Vector2(x1, y1), new Vector2(x1, y2), wallThickness, Color.Black);
+            }
 
-                if (cell.West == null)
-                {
-                    Raylib.DrawLineEx(new Vector2(x1, y1), new Vector2(x1, y2), wallThickness, Color.Black);
-                }
+            if (!cell.Linked(cell.East))
+            {
+                Raylib.DrawLineEx(new Vector2(x2, y1), new Vector2(x2, y2), wallThickness, Color.Black);
+            }
 
-                if (!cell.Linked(cell.East))
-                {
-                    Raylib.DrawLineEx(new Vector2(x2, y1), new Vector2(x2, y2), wallThickness, Color.Black);
-                }
-
-                if (!cell.Linked(cell.South))
-                {
-                    Raylib.DrawLineEx(new Vector2(x1, y2), new Vector2(x2, y2), wallThickness, Color.Black);
-                }
+            if (!cell.Linked(cell.South))
+            {
+                Raylib.DrawLineEx(new Vector2(x1, y2), new Vector2(x2, y2), wallThickness, Color.Black);
             }
         }
     }
