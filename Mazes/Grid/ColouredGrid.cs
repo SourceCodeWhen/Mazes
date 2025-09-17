@@ -19,6 +19,16 @@ public class ColouredGrid : BaseGrid
         {
             return Color.Red;
         }
+
+        if (cell.IsRoot)
+        {
+            return Color.Blue;
+        }
+
+        if (cell.IsPath)
+        {
+            return Color.Purple;
+        }
         if (distances == null)
         {
             return Color.White;

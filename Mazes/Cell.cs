@@ -22,6 +22,8 @@ public class Cell
     private Dictionary<Cell,Boolean> LinkMap { get; set; }
 
     public bool IsHead { get; set; } = false;
+    public bool IsRoot { get; set; } = false;
+    public bool IsPath { get; set; } = false;
 
     public void Link(Cell cell, Boolean bidi = true)
     {

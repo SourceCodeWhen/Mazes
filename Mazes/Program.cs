@@ -20,7 +20,7 @@ int renderWidth = (rows * cellSize) + 1;
 int renderHeight = (columns * cellSize) + footPadding;
 
 int selectedAlgo = 0;
-BaseAlgo[] algos = [new BinaryTree(), new Sidewinder(), new AldousBroder()];
+BaseAlgo[] algos = [new BinaryTree(), new Sidewinder(),  new Wilsons(), new AldousBroder()];
 
 int selectedGrid = 0;
 String[] grids = ["basegrid", "distancegrid", "colouredgrid"];
