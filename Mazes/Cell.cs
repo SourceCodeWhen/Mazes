@@ -21,6 +21,8 @@ public class Cell
     public Cell? West { get; set; }
     private Dictionary<Cell,Boolean> LinkMap { get; set; }
 
+    public bool IsHead { get; set; } = false;
+
     public void Link(Cell cell, Boolean bidi = true)
     {
         LinkMap.Add(cell, true);
@@ -106,5 +108,36 @@ public class Cell
         }
         
         return distances;
+    }
+
+    public IEnumerable<Distances> GetAnimatedDistance()
+    {
+        Distances distances = new Distances(this);
+
+        List<Cell> frontier = new List<Cell> { this };
+
+        while (frontier.Any())
+        {
+            List<Cell> newFrontier = new();
+
+            foreach (Cell cell in frontier)
+            {
+                foreach (Cell linked in cell.Links())
+                {
+                    if (distances[linked] != null)
+                    {
+                        continue;
+                    }
+                    distances.SetCell(linked, (int)distances[cell]! + 1);
+                    newFrontier.Add(linked);
+
+                    yield return distances;
+                }
+            }
+
+            frontier = newFrontier;
+        }
+        
+        // yield return distances;
     }
 }

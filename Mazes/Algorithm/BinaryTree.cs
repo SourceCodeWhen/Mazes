@@ -32,6 +32,42 @@ public class BinaryTree : BaseAlgo
         return baseGrid;
     }
 
+    public IEnumerable<BaseGrid> OnEnumerable(BaseGrid baseGrid, SortedDictionary<string, int> pairs)
+    {
+        Cell lastCell = null;
+        foreach (Cell cell in baseGrid.EachCell())
+        {
+            if (lastCell != null)
+            {
+                lastCell.IsHead = false;
+            }
+            List<Cell> neighbours = new List<Cell>();
+
+            if (cell.North != null)
+            {
+                neighbours.Add(cell.North);
+            }
+
+            if (cell.East != null)
+            {
+                neighbours.Add(cell.East);
+            }
+
+            if (neighbours.Count >= 1)
+            {
+                var index = _random.Next(neighbours.Count);
+                var neighbour = neighbours[index];
+                cell.Link(neighbour);
+            }
+
+            cell.IsHead = true;
+            lastCell = cell;
+            yield return baseGrid;
+        }
+
+        yield return baseGrid;
+    }
+
     public SortedDictionary<string, int> PairOptions()
     {
         return new SortedDictionary<string, int>();

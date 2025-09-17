@@ -246,15 +246,19 @@ public class BaseGrid
 
     public virtual Color BackgroundColourForCell(Cell cell)
     {
+        if (cell.IsHead)
+        {
+            return Color.Red;
+        }
         return Color.White;
     }
 
-    public void toRaylib(int renderWidth, int renderHeight, int cellSize = 10, float wallThickness = 2.0f, bool backgrounds = false)
+    public void toRaylib(int renderWidth, int renderHeight, bool animated, int cellSize = 10,
+        float wallThickness = 2.0f, bool backgrounds = false)
     {
         if (_rendered == false)
         {
             _target = Raylib.LoadRenderTexture(renderWidth, renderHeight);
-
             Raylib.BeginTextureMode(_target);
 
             if (backgrounds)
@@ -263,7 +267,9 @@ public class BaseGrid
             }
 
             RenderWalls(cellSize, wallThickness);
+
             Raylib.EndTextureMode();
+
             _rendered = true;
         }
 
@@ -294,16 +300,6 @@ public class BaseGrid
         {
             Raylib.DrawRectangle(cell.x1, cell.y1, cellSize, cellSize, cell.colour);
         }
-
-        // foreach (var cell in EachCell())
-        // {
-        //     int x1 = cell.Col * cellSize;
-        //     int y1 = cell.Row * cellSize;
-        //
-        //     var colour = BackgroundColourForCell(cell);
-        //     
-        //     Raylib.DrawRectangle(x1, y1, cellSize, cellSize, colour);
-        // }
     }
 
     private void RenderWalls(int cellSize, float wallThickness)
