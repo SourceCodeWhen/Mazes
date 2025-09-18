@@ -7,4 +7,6 @@ public interface BaseAlgo
     public IEnumerable<BaseGrid> OnEnumerable(BaseGrid baseGrid, SortedDictionary<string, int> pairs);
 
     public SortedDictionary<string, int> PairOptions();
+
+    public bool ForceAnimateAlgorithm();
 }

@@ -3,7 +3,7 @@ namespace Mazes.Algorithm;
 public class Wilsons : BaseAlgo
 {
     private static Random _random = new Random();
-
+    private int currentMaxPath = 0;
 
     public BaseGrid On(BaseGrid baseGrid, SortedDictionary<string, int> pairs)
     {
@@ -59,13 +59,18 @@ public class Wilsons : BaseAlgo
                 var position = path.IndexOf(cell);
                 if (position != -1)
                 {
-                    unvisited.ForEach(x => x.IsPath = false);
+                    unvisited.ForEach(x => x.PathNum = null);
                     path = path.GetRange(0,  position + 1);
-                    path.ForEach(x => x.IsPath = true);
+                    for (int i = 0; i < path.Count; i++)
+                    {
+                        path[i].PathNum = i;
+                    }
+                    currentMaxPath = path.Count + 1;
                 }
                 else
                 {
-                    cell.IsPath = true;
+                    cell.PathNum = currentMaxPath;
+                    currentMaxPath++;
                     path.Add(cell);
                 }
 
@@ -77,8 +82,8 @@ public class Wilsons : BaseAlgo
             for (int i = 0; i <= path.Count - 2; i++)
             {
                 path[i].Link(path[i + 1]);
-                path[i].IsPath = false;
-                path[i + 1].IsPath = false;
+                path[i].PathNum = null;
+                path[i + 1].PathNum = null;
                 unvisited.Remove(path[i]);
             }
             yield return baseGrid;
@@ -88,7 +93,7 @@ public class Wilsons : BaseAlgo
 
         foreach (var cellio in baseGrid.EachCell().AsEnumerable())
         {
-            cellio.IsPath = false;
+            cellio.PathNum = null;
         }
         
         yield return baseGrid;
@@ -98,4 +103,6 @@ public class Wilsons : BaseAlgo
     {
         return new SortedDictionary<string, int>();
     }
+    
+    public bool ForceAnimateAlgorithm() => true;
 }

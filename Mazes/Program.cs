@@ -14,34 +14,35 @@ float secondsSinceLastInput = 0.0f;
 int targettedRow = rows / 2;
 int targettedColumn = columns / 2;
 
-int footPadding = 30;
+int footPadding = 60;
 
 int renderWidth = (rows * cellSize) + 1;
 int renderHeight = (columns * cellSize) + footPadding;
 
 int selectedAlgo = 0;
-BaseAlgo[] algos = [new BinaryTree(), new Sidewinder(),  new Wilsons(), new AldousBroder()];
+BaseAlgo[] algos = [new BinaryTree(), new Sidewinder(),  new Wilsons(), new AldousBroder(), new HuntAndKill(), new Backtracker()];
 
 int selectedGrid = 0;
-String[] grids = ["basegrid", "distancegrid", "colouredgrid"];
-bool renderBackgrounds = false;
+BaseGrid[] grids = [new ColouredGrid(rows, columns), new BaseGrid(rows, columns), new DistanceGrid(rows, columns) ];
+bool renderBackgrounds = grids[selectedGrid].RenderBackgrounds();
+
+int selectedColorMode = 0;
+string[] colorMode = ["distance", "links"];
 
 Raylib.InitWindow(renderWidth, renderHeight, "Maze");
 
-GridBuilder gridBuilder = new GridBuilder();
-
-var grid = gridBuilder.WithRows(rows).WithColumns(columns).WithType(grids[selectedGrid]).Build();
+var grid = grids[selectedGrid];
 
 SortedDictionary<string, int> pairs = algos[selectedAlgo].PairOptions();
 
 algos[selectedAlgo].On(grid, pairs);
 
 bool animatePathfinding = false;
-bool animateAlgorithm = false;
+bool animateAlgorithm = algos[selectedAlgo].ForceAnimateAlgorithm();
 
 bool changedAlgoRecently = false;
 bool changedGridRecently = false;
-string footerText = Footer.CalculateFooter(grids[selectedGrid], algos[selectedAlgo].GetType().Name, pairs);
+string footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs, grid.DeadEnds().Length);
 IEnumerator<Distances> distEnumerator = null;
 IEnumerator<BaseGrid> baseGridEnumerator = null;
 Raylib.SetTargetFPS(144);
@@ -51,10 +52,11 @@ while (!Raylib.WindowShouldClose())
     Raylib.ClearBackground(Color.White);
     if (Raylib.IsKeyDown(KeyboardKey.Space))
     {
-        grid = gridBuilder.Build();
-        algos[selectedAlgo].On(grid, pairs);
+        grid.Reset();
+        algos[selectedAlgo].On((BaseGrid)grid, pairs);
         distEnumerator = null;
-            baseGridEnumerator = null;
+        baseGridEnumerator = null;
+        footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs, grid.DeadEnds().Length);
     }
 
     if (Raylib.IsKeyDown(KeyboardKey.Up))
@@ -67,9 +69,11 @@ while (!Raylib.WindowShouldClose())
             renderHeight = (columns * cellSize) + footPadding;
             renderWidth = (rows * cellSize) + 1;
             Raylib.SetWindowSize(renderWidth, renderHeight);
-            grid = gridBuilder.WithRows(rows).WithColumns(columns).Build();
+            grid.Rows = rows;
+            grid.Columns = columns;
+            grid.Reset();
             algos[selectedAlgo].On(grid, pairs);
-            footerText = Footer.CalculateFooter(grids[selectedGrid], algos[selectedAlgo].GetType().Name, pairs);
+            footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
             distEnumerator = null;
             baseGridEnumerator = null;
         }
@@ -89,9 +93,11 @@ while (!Raylib.WindowShouldClose())
             renderHeight = (columns * cellSize) + footPadding;
             renderWidth = (rows * cellSize) + 1;
             Raylib.SetWindowSize(renderWidth, renderHeight);
-            grid = gridBuilder.WithRows(rows).WithColumns(columns).Build();
+            grid.Rows = rows;
+            grid.Columns = columns;
+            grid.Reset();
             algos[selectedAlgo].On(grid, pairs);
-            footerText = Footer.CalculateFooter(grids[selectedGrid], algos[selectedAlgo].GetType().Name, pairs);
+            footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
             distEnumerator = null;
             baseGridEnumerator = null;
         }
@@ -114,9 +120,11 @@ while (!Raylib.WindowShouldClose())
                 }
             }
 
-            grid = gridBuilder.WithRows(rows).WithColumns(columns).Build();
+            grid.Rows = rows;
+            grid.Columns = columns;
+            grid.Reset();
             algos[selectedAlgo].On(grid, pairs);
-            footerText = Footer.CalculateFooter(grids[selectedGrid], algos[selectedAlgo].GetType().Name, pairs);
+            footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
             distEnumerator = null;
             baseGridEnumerator = null;
         }
@@ -136,9 +144,11 @@ while (!Raylib.WindowShouldClose())
                 pairs[pairs.First().Key] += 1;
             }
 
-            grid = gridBuilder.WithRows(rows).WithColumns(columns).Build();
+            grid.Rows = rows;
+            grid.Columns = columns;
+            grid.Reset();
             algos[selectedAlgo].On(grid, pairs);
-            footerText = Footer.CalculateFooter(grids[selectedGrid], algos[selectedAlgo].GetType().Name, pairs);
+            footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
             distEnumerator = null;
             baseGridEnumerator = null;
         }
@@ -148,6 +158,20 @@ while (!Raylib.WindowShouldClose())
         }
     }
 
+    if (Raylib.IsKeyPressed(KeyboardKey.C))
+    {
+        if (selectedColorMode == colorMode.Length - 1)
+        {
+            selectedColorMode = 0;
+        }
+        else
+        {
+            selectedColorMode++;
+        }
+
+        grid._rendered = false;
+    }
+    
     if (Raylib.IsKeyDown(KeyboardKey.Equal))
     {
         if (secondsSinceLastInput > 0.1f)
@@ -200,19 +224,13 @@ while (!Raylib.WindowShouldClose())
                 selectedGrid = 0;
             }
 
-            grid = gridBuilder.WithType(grids[selectedGrid]).Build();
+            grid = grids[selectedGrid];
+            grid.Reset();
             algos[selectedAlgo].On(grid, pairs);
 
-            footerText = Footer.CalculateFooter(grids[selectedGrid], algos[selectedAlgo].GetType().Name, pairs);
+            footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
 
-            if (grids[selectedGrid].Equals("distancegrid") || grids[selectedGrid].Equals("colouredgrid"))
-            {
-                renderBackgrounds = true;
-            }
-            else
-            {
-                renderBackgrounds = false;
-            }
+            renderBackgrounds = grid.RenderBackgrounds();
             distEnumerator = null;
             baseGridEnumerator = null;
         }
@@ -237,14 +255,15 @@ while (!Raylib.WindowShouldClose())
                 selectedAlgo = 0;
             }
 
-            grid = gridBuilder.Build();
+            grid.Reset();
             pairs = algos[selectedAlgo].PairOptions();
+            animateAlgorithm = algos[selectedAlgo].ForceAnimateAlgorithm();
             if (!animateAlgorithm)
             {
                 algos[selectedAlgo].On(grid, pairs);
             }
-
-            footerText = Footer.CalculateFooter(grids[selectedGrid], algos[selectedAlgo].GetType().Name, pairs);
+            
+            footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
             distEnumerator = null;
             baseGridEnumerator = null;
         }
@@ -340,25 +359,29 @@ while (!Raylib.WindowShouldClose())
             {
                 grid = baseGridEnumerator.Current;
                 grid._rendered = false;
+                footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
             }
             else
             {
                 baseGridEnumerator = null;
                 animateAlgorithm = false;
+                animatePathfinding = true;
+                footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
             }
         }
         else
         {
                 distEnumerator = null;
-                baseGridEnumerator = algos[selectedAlgo].OnEnumerable(gridBuilder.Build(), pairs).GetEnumerator();
+                grid.Reset();
+                baseGridEnumerator = algos[selectedAlgo].OnEnumerable(grid, pairs).GetEnumerator();
                 baseGridEnumerator.MoveNext();
                 grid = baseGridEnumerator.Current;
                 grid._rendered = false;
         }
     }
 
-    grid.toRaylib(renderWidth, renderHeight,animatePathfinding, cellSize, wallThickness, renderBackgrounds);
-    Raylib.DrawText(footerText, 1, (columns * cellSize) + (footPadding / 2), 10, Color.Black);
+    grid.toRaylib(renderWidth, renderHeight,animatePathfinding, cellSize, wallThickness, renderBackgrounds, colorMode[selectedColorMode]);
+    Raylib.DrawText(footerText, 1, (columns * cellSize) + (footPadding / 5), 10, Color.Black);
     Raylib.DrawFPS((rows * cellSize) - 100, (columns * cellSize) + (footPadding / 5));
     Raylib.EndDrawing();
 }

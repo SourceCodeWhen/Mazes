@@ -19,16 +19,21 @@ public class BaseGrid
 
     public Boolean _rendered = false;
 
-    public int Rows { get; }
-    public int Columns { get; }
+    public int Rows { get; set;  }
+    public int Columns { get; set;  }
 
     private Cell?[][] _cells;
 
     private Random _rand;
 
-    public BaseGrid(int rows, int columns)
+    public BaseGrid()
     {
         _rand = new Random();
+        
+    }
+    
+    public BaseGrid(int rows, int columns) : this()
+    {
         Rows = rows;
         Columns = columns;
         PrepareGrid();
@@ -244,7 +249,7 @@ public class BaseGrid
         }
     }
 
-    public virtual Color BackgroundColourForCell(Cell cell)
+    public virtual Color BackgroundColourForCell(Cell cell, string colourMode)
     {
         if (cell.IsHead)
         {
@@ -254,16 +259,17 @@ public class BaseGrid
     }
 
     public void toRaylib(int renderWidth, int renderHeight, bool animated, int cellSize = 10,
-        float wallThickness = 2.0f, bool backgrounds = false)
+        float wallThickness = 2.0f, bool backgrounds = false, string colourMode = "distance")
     {
         if (_rendered == false)
         {
+            Raylib.UnloadRenderTexture(_target);
             _target = Raylib.LoadRenderTexture(renderWidth, renderHeight);
             Raylib.BeginTextureMode(_target);
 
             if (backgrounds)
             {
-                RenderBackground(cellSize);
+                RenderBackground(cellSize, colourMode);
             }
 
             RenderWalls(cellSize, wallThickness);
@@ -282,7 +288,7 @@ public class BaseGrid
         }, new Vector2(0, 0), Color.White);
     }
 
-    private void RenderBackground(int cellSize)
+    private void RenderBackground(int cellSize, string colourMode)
     {
         ConcurrentBag<(int x1, int y1, Color colour)>? _cellBag = new ConcurrentBag<(int x1, int y1, Color color)>();
 
@@ -291,7 +297,7 @@ public class BaseGrid
             int x1 = cell.Col * cellSize;
             int y1 = cell.Row * cellSize;
 
-            var colour = BackgroundColourForCell(cell);
+            var colour = BackgroundColourForCell(cell, colourMode);
 
             _cellBag.Add((x1, y1, colour));
         });
@@ -332,4 +338,29 @@ public class BaseGrid
             }
         }
     }
+
+    public virtual void Reset()
+    {
+        _rendered = false;
+        PrepareGrid();
+        ConfigureCells();
+    }
+
+    public virtual bool RenderBackgrounds() => false;
+
+    public Cell[] DeadEnds()
+    {
+        List<Cell> cellList = new();
+
+        foreach (Cell cell in EachCell())
+        {
+            if (cell.Links().Count == 1)
+            {
+                cellList.Add(cell);                
+            }
+        }
+
+        return cellList.ToArray();
+    }
+    
 }

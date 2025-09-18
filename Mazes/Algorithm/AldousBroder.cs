@@ -51,4 +51,7 @@ public class AldousBroder : BaseAlgo
     {
         return new SortedDictionary<string, int>();
     }
+    
+    public bool ForceAnimateAlgorithm() => true;
+
 }

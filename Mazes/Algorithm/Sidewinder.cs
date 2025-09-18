@@ -94,4 +94,6 @@ public class Sidewinder : BaseAlgo
     {
         return new SortedDictionary<string, int>() { {"CLOSEOUT", 2} };
     }
+
+    public bool ForceAnimateAlgorithm() => true;
 }

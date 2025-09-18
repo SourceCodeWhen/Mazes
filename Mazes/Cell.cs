@@ -23,7 +23,7 @@ public class Cell
 
     public bool IsHead { get; set; } = false;
     public bool IsRoot { get; set; } = false;
-    public bool IsPath { get; set; } = false;
+    public int? PathNum { get; set; } = null;
 
     public void Link(Cell cell, Boolean bidi = true)
     {

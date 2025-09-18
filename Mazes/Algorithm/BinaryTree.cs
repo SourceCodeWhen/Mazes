@@ -34,13 +34,8 @@ public class BinaryTree : BaseAlgo
 
     public IEnumerable<BaseGrid> OnEnumerable(BaseGrid baseGrid, SortedDictionary<string, int> pairs)
     {
-        Cell lastCell = null;
         foreach (Cell cell in baseGrid.EachCell())
         {
-            if (lastCell != null)
-            {
-                lastCell.IsHead = false;
-            }
             List<Cell> neighbours = new List<Cell>();
 
             if (cell.North != null)
@@ -61,8 +56,8 @@ public class BinaryTree : BaseAlgo
             }
 
             cell.IsHead = true;
-            lastCell = cell;
             yield return baseGrid;
+            cell.IsHead = false;
         }
 
         yield return baseGrid;
@@ -72,4 +67,7 @@ public class BinaryTree : BaseAlgo
     {
         return new SortedDictionary<string, int>();
     }
+    
+    public bool ForceAnimateAlgorithm() => true;
+    
 }
