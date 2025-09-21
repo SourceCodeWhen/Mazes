@@ -58,7 +58,7 @@ public class Cell
         return LinkMap.ContainsKey(cell);
     }
 
-    public List<Cell> Neighbours()
+    public virtual List<Cell> Neighbours()
     {
         List<Cell> neighbours = new();
         if (North != null)

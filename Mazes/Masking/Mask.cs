@@ -1,3 +1,5 @@
+using ImageMagick;
+
 namespace Mazes.Masking;
 
 public class Mask
@@ -9,6 +11,30 @@ public class Mask
 
     private Random random = new Random();
 
+    public Mask(FileInfo fileInfo)
+    {
+        var image = new MagickImage(fileInfo);
+        Rows = (int)image.Width;
+        Columns =  (int)image.Height;
+        bits = new bool[Rows][];
+        var pixels = image.GetPixels();
+        for (int i = 0; i < Rows; i++)
+        {
+            bits[i] = new bool[Columns];
+            for (int j = 0; j < Columns; j++)
+            {
+                if (pixels[i, j].ToColor().Equals(MagickColors.Black))
+                {
+                    bits[i][j] = false;
+                }
+                else
+                {
+                    bits[i][j] = true;
+                }
+            }
+        }
+    }
+    
     public Mask(int rows, int columns)
     {
         Rows = rows;
@@ -63,7 +89,7 @@ public class Mask
         {
             if (row < 0 || row > Rows - 1)
             {
-                return null;
+                throw new IndexOutOfRangeException();
             }
 
             return bits[row];
@@ -88,7 +114,7 @@ public class Mask
         return count;
     }
 
-    public bool RandomLocation()
+    public KeyValuePair<int, int> RandomLocation()
     {
         while (true)
         {
@@ -96,7 +122,7 @@ public class Mask
             var col = random.Next(Columns);
             if (this[row, col])
             {
-                return true;
+                return new  KeyValuePair<int, int>(row, col);
             }
         }
     }

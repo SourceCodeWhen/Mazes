@@ -15,14 +15,14 @@ public class BaseGrid
 {
     public virtual Distances distances { get; set; }
 
-    private RenderTexture2D _target;
+    protected RenderTexture2D _target;
 
     public Boolean _rendered = false;
 
     public int Rows { get; set;  }
     public int Columns { get; set;  }
 
-    private Cell?[][] _cells;
+    protected Cell?[][] _cells;
 
     private Random _rand;
 
@@ -40,7 +40,7 @@ public class BaseGrid
         ConfigureCells();
     }
 
-    private void PrepareGrid()
+    public virtual void PrepareGrid()
     {
         _cells = new Cell[Rows][];
         for (int row = 0; row < Rows; row++)
@@ -53,12 +53,16 @@ public class BaseGrid
         }
     }
 
-    private void ConfigureCells()
+    protected virtual void ConfigureCells()
     {
         foreach (Cell?[] array in _cells)
         {
             foreach (Cell? cell in array)
             {
+                if (cell == null)
+                {
+                    continue;
+                }
                 var row = cell.Row;
                 var col = cell.Col;
 
@@ -85,10 +89,14 @@ public class BaseGrid
         }
     }
 
-    public Cell? this[int row, int col]
+    public virtual Cell? this[int row, int col]
     {
         get
         {
+            if (_cells.Length == 0)
+            {
+                return null;
+            }
             if (row < 0 || row > Rows - 1)
             {
                 return null;
@@ -103,10 +111,15 @@ public class BaseGrid
         }
     }
 
-    public Cell?[] this[int row]
+    public virtual Cell?[] this[int row]
     {
         get
         {
+            if (_cells.Length == 0)
+            {
+                return null;
+            }
+            
             if (row < 0 || row > Rows - 1)
             {
                 return null;
@@ -116,7 +129,7 @@ public class BaseGrid
         }
     }
 
-    public Cell? RandomCell()
+    public virtual Cell? RandomCell()
     {
         var row = _rand.Next(Rows - 1);
         var col = _rand.Next(this[row].Length - 1);
@@ -258,7 +271,7 @@ public class BaseGrid
         return Color.White;
     }
 
-    public void toRaylib(int renderWidth, int renderHeight, bool animated, int cellSize = 10,
+    public virtual void toRaylib(int renderWidth, int renderHeight, bool animated, int cellSize = 10,
         float wallThickness = 2.0f, bool backgrounds = false, string colourMode = "distance")
     {
         if (_rendered == false)
@@ -288,7 +301,7 @@ public class BaseGrid
         }, new Vector2(0, 0), Color.White);
     }
 
-    private void RenderBackground(int cellSize, string colourMode)
+    protected virtual void RenderBackground(int cellSize, string colourMode)
     {
         ConcurrentBag<(int x1, int y1, Color colour)>? _cellBag = new ConcurrentBag<(int x1, int y1, Color color)>();
 
@@ -308,7 +321,7 @@ public class BaseGrid
         }
     }
 
-    private void RenderWalls(int cellSize, float wallThickness)
+    protected virtual void RenderWalls(int cellSize, float wallThickness)
     {
         foreach (Cell cell in EachCell())
         {

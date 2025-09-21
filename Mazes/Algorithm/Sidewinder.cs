@@ -59,6 +59,10 @@ public class Sidewinder : BaseAlgo
 
             foreach (Cell cell in row)
             {
+                if (cell == null)
+                {
+                    continue;
+                }
                 run.Add(cell);
 
                 bool atEasternBoundary = cell.East == null;

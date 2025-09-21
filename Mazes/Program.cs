@@ -2,13 +2,14 @@
 using System.Threading.Tasks.Dataflow;
 using Mazes;
 using Mazes.Algorithm;
+using Mazes.Masking;
 using Mazes.Metadata;
 using Mazes.Pathfinding;
 using Raylib_cs;
 
-int rows = 20;
-int columns = 20;
-int cellSize = 25;
+int rows = 30;
+int columns = 30;
+int cellSize = 20;
 float wallThickness = 3.0f;
 float secondsSinceLastInput = 0.0f;
 int targettedRow = rows / 2;
@@ -22,8 +23,12 @@ int renderHeight = (columns * cellSize) + footPadding;
 int selectedAlgo = 0;
 BaseAlgo[] algos = [new BinaryTree(), new Sidewinder(),  new Wilsons(), new AldousBroder(), new HuntAndKill(), new Backtracker()];
 
+FileInfo info = new FileInfo("/home/jack/Documents/hahaepic");
+
+Mask mask = new Mask(info);
+
 int selectedGrid = 0;
-BaseGrid[] grids = [new ColouredGrid(rows, columns), new BaseGrid(rows, columns), new DistanceGrid(rows, columns) ];
+BaseGrid[] grids = [new ColouredGrid(rows, columns), new BaseGrid(rows, columns), new DistanceGrid(rows, columns),new PolarGrid(rows)];
 bool renderBackgrounds = grids[selectedGrid].RenderBackgrounds();
 
 int selectedColorMode = 0;
@@ -45,7 +50,7 @@ bool changedGridRecently = false;
 string footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs, grid.DeadEnds().Length);
 IEnumerator<Distances> distEnumerator = null;
 IEnumerator<BaseGrid> baseGridEnumerator = null;
-Raylib.SetTargetFPS(144);
+// Raylib.SetTargetFPS(144);
 while (!Raylib.WindowShouldClose())
 {
     Raylib.BeginDrawing();
@@ -225,6 +230,15 @@ while (!Raylib.WindowShouldClose())
             }
 
             grid = grids[selectedGrid];
+            if (grid.GetType() == typeof(MaskedGrid))
+            {
+                cellSize = 8;
+                columns = grid.Columns;
+                rows = grid.Rows;
+                renderHeight = (columns * cellSize) + footPadding;
+                renderWidth = (rows * cellSize) + 1;
+                Raylib.SetWindowSize(renderWidth, renderHeight);
+            }
             grid.Reset();
             algos[selectedAlgo].On(grid, pairs);
 
@@ -256,11 +270,15 @@ while (!Raylib.WindowShouldClose())
             }
 
             grid.Reset();
+            baseGridEnumerator = null;
             pairs = algos[selectedAlgo].PairOptions();
             animateAlgorithm = algos[selectedAlgo].ForceAnimateAlgorithm();
             if (!animateAlgorithm)
             {
                 algos[selectedAlgo].On(grid, pairs);
+            }
+            else
+            {
             }
             
             footerText = Footer.CalculateFooter(grids[selectedGrid].GetType().Name, algos[selectedAlgo].GetType().Name, pairs,grid.DeadEnds().Length);
@@ -322,7 +340,8 @@ while (!Raylib.WindowShouldClose())
         {
             if (distEnumerator == null)
             {
-                distEnumerator = grid[targettedRow, targettedColumn].GetAnimatedDistance().GetEnumerator();
+                var targetCell =  grid[targettedRow, targettedColumn] ?? grid.RandomCell();
+                distEnumerator = targetCell.GetAnimatedDistance().GetEnumerator();
                 grid.distances = distEnumerator.Current;
             }
 
@@ -344,7 +363,7 @@ while (!Raylib.WindowShouldClose())
             {
                 if (grid.distances == null)
                 {
-                    var start = grid[targettedRow, targettedColumn];
+                    var start = grid[targettedRow, targettedColumn] ?? grid.RandomCell();
                     grid.distances = start.Distances();
                 }
             }
